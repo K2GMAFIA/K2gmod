@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>K2G MAFIA — Short Links</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #020208;
+  --text: #f0f0ff;
+  --muted: #7070a0;
+  --border: rgba(180,100,255,0.2);
+  --success: #00ffaa;
+  --error: #ff4466;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; -webkit-overflow-scrolling:touch; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start;
+  padding:32px 16px 60px; position:relative;
+  overflow-x:hidden; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#canvas { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.glow-orb {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+  animation:orbMove 8s ease-in-out infinite alternate;
+}
+.orb1 { width:500px;height:500px;top:-150px;left:-100px; background:radial-gradient(circle,rgba(191,0,255,0.18) 0%,transparent 70%); }
+.orb2 { width:400px;height:400px;bottom:-100px;right:-100px; background:radial-gradient(circle,rgba(0,238,255,0.15) 0%,transparent 70%); animation-delay:-4s; }
+.orb3 { width:300px;height:300px;top:40%;left:50%;transform:translate(-50%,-50%); background:radial-gradient(circle,rgba(255,0,170,0.1) 0%,transparent 70%); animation-delay:-2s; }
+.laser { position:fixed; pointer-events:none; z-index:0; }
+.lh { height:1px; left:-300px; animation:laserH 7s linear infinite; }
+.lh1 { top:22%; width:250px; background:linear-gradient(90deg,transparent,#bf00ff,#bf00ff,transparent); animation-duration:9s; }
+.lh2 { top:68%; width:350px; background:linear-gradient(90deg,transparent,#00eeff,#00eeff,transparent); animation-duration:6s; animation-delay:3s; }
+.lv { width:1px; top:-250px; animation:laserV 8s linear infinite; }
+.lv1 { left:25%; height:200px; background:linear-gradient(180deg,transparent,#ff00aa,#ff00aa,transparent); animation-duration:10s; }
+.lv2 { left:75%; height:180px; background:linear-gradient(180deg,transparent,#00ff88,#00ff88,transparent); animation-delay:4s; }
+@keyframes laserH { to { left:110vw; } }
+@keyframes laserV { to { top:110vh; } }
+@keyframes orbMove { from{transform:scale(1)} to{transform:scale(1.2) translate(30px,20px)} }
+@keyframes neonBorder {
+  0%  {border-color:#bf00ff;box-shadow:0 0 10px #bf00ff,0 0 30px rgba(191,0,255,0.35),inset 0 0 15px rgba(191,0,255,0.04);}
+  20% {border-color:#00eeff;box-shadow:0 0 10px #00eeff,0 0 30px rgba(0,238,255,0.35),inset 0 0 15px rgba(0,238,255,0.04);}
+  40% {border-color:#ff00aa;box-shadow:0 0 10px #ff00aa,0 0 30px rgba(255,0,170,0.35),inset 0 0 15px rgba(255,0,170,0.04);}
+  60% {border-color:#00ff88;box-shadow:0 0 10px #00ff88,0 0 30px rgba(0,255,136,0.35),inset 0 0 15px rgba(0,255,136,0.04);}
+  80% {border-color:#ffcc00;box-shadow:0 0 10px #ffcc00,0 0 30px rgba(255,204,0,0.35),inset 0 0 15px rgba(255,204,0,0.04);}
+  100%{border-color:#bf00ff;box-shadow:0 0 10px #bf00ff,0 0 30px rgba(191,0,255,0.35),inset 0 0 15px rgba(191,0,255,0.04);}
+}
+@keyframes neonText {
+  0%  {color:#bf00ff;text-shadow:0 0 8px #bf00ff,0 0 20px rgba(191,0,255,0.7);}
+  20% {color:#00eeff;text-shadow:0 0 8px #00eeff,0 0 20px rgba(0,238,255,0.7);}
+  40% {color:#ff00aa;text-shadow:0 0 8px #ff00aa,0 0 20px rgba(255,0,170,0.7);}
+  60% {color:#00ff88;text-shadow:0 0 8px #00ff88,0 0 20px rgba(0,255,136,0.7);}
+  80% {color:#ffcc00;text-shadow:0 0 8px #ffcc00,0 0 20px rgba(255,204,0,0.7);}
+  100%{color:#bf00ff;text-shadow:0 0 8px #bf00ff,0 0 20px rgba(191,0,255,0.7);}
+}
+@keyframes neonBg {
+  0%  {background:linear-gradient(135deg,#5500aa,#bf00ff);box-shadow:0 0 18px #bf00ff,0 0 40px rgba(191,0,255,0.4);}
+  20% {background:linear-gradient(135deg,#005577,#00eeff);box-shadow:0 0 18px #00eeff,0 0 40px rgba(0,238,255,0.4);}
+  40% {background:linear-gradient(135deg,#770033,#ff00aa);box-shadow:0 0 18px #ff00aa,0 0 40px rgba(255,0,170,0.4);}
+  60% {background:linear-gradient(135deg,#005533,#00ff88);box-shadow:0 0 18px #00ff88,0 0 40px rgba(0,255,136,0.4);}
+  80% {background:linear-gradient(135deg,#776600,#ffcc00);box-shadow:0 0 18px #ffcc00,0 0 40px rgba(255,204,0,0.4);}
+  100%{background:linear-gradient(135deg,#5500aa,#bf00ff);box-shadow:0 0 18px #bf00ff,0 0 40px rgba(191,0,255,0.4);}
+}
+@keyframes shimmer { to{background-position:300% center} }
+@keyframes spin { to{transform:rotate(360deg)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+@keyframes countdown { from{width:100%} to{width:0%} }
+@keyframes timerPulse { 0%,100%{box-shadow:0 0 10px #bf00ff} 50%{box-shadow:0 0 30px #bf00ff,0 0 60px rgba(191,0,255,0.5)} }
+
+.wrap { position:relative;z-index:1;width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center; }
+.badge {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(80,0,140,0.2);border:1px solid rgba(191,0,255,0.5);
+  border-radius:100px;padding:5px 16px;font-size:11px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;
+  animation:neonText 5s linear infinite;
+}
+.bdot { width:6px;height:6px;border-radius:50%;animation:neonBg 5s linear infinite,pulse 2s infinite;flex-shrink:0; }
+h1 { font-size:36px;font-weight:700;color:#fff;text-align:center;line-height:1.1;margin-bottom:8px;letter-spacing:-1px; }
+h1 span {
+  background:linear-gradient(90deg,#bf00ff,#00eeff,#ff00aa,#00ff88,#ffcc00,#bf00ff);
+  background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 2.5s linear infinite;filter:drop-shadow(0 0 14px rgba(191,0,255,0.9));
+}
+.sub { font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px; }
+
+.card {
+  width:100%;background:rgba(4,4,14,0.93);border:1px solid #bf00ff;
+  border-radius:20px;padding:26px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  position:relative;overflow:hidden;animation:neonBorder 5s linear infinite;
+  margin-bottom:0;
+}
+.card::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#bf00ff,#00eeff,#ff00aa,transparent);animation:shimmer 2s linear infinite;background-size:300% auto; }
+
+.type-toggle { display:flex;gap:8px;margin-bottom:20px; }
+.type-btn { flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--muted);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s; }
+.type-btn.active { background:rgba(191,0,255,0.1);border-color:rgba(191,0,255,0.6);color:#bf00ff;text-shadow:0 0 8px rgba(191,0,255,0.6);box-shadow:0 0 12px rgba(191,0,255,0.15); }
+
+label { display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px; }
+.field-group { margin-bottom:16px; }
+input[type="text"], input[type="number"], select, textarea {
+  width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--text);
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+textarea { resize:vertical;min-height:68px; }
+input:focus,select:focus,textarea:focus { border-color:rgba(191,0,255,0.8);box-shadow:0 0 0 2px rgba(191,0,255,0.18),0 0 14px rgba(191,0,255,0.25); }
+input::placeholder,textarea::placeholder { color:rgba(112,112,160,0.5); }
+
+.task-fields { display:none; }
+.task-fields.show { display:block; }
+
+.btn-item { background:rgba(255,255,255,0.02);border:1px solid rgba(191,0,255,0.2);border-radius:10px;padding:12px;margin-bottom:10px; }
+.btn-row { display:flex;gap:8px;align-items:center;margin-bottom:8px; }
+.btn-row:last-child { margin-bottom:0; }
+.btn-row input { margin-bottom:0;flex:1; }
+.color-pick { width:44px;height:40px;padding:2px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.04);cursor:pointer;flex-shrink:0; }
+.rm-btn { background:none;border:1px solid rgba(255,68,102,0.25);border-radius:6px;color:rgba(255,68,102,0.6);font-size:12px;padding:4px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit;transition:all .2s; }
+.rm-btn:hover { background:rgba(255,68,102,0.1);color:#ff4466; }
+.add-btn { width:100%;padding:10px;border-radius:10px;border:1px dashed rgba(191,0,255,0.4);background:rgba(191,0,255,0.04);color:#bf00ff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:16px;transition:all .2s;text-shadow:0 0 8px rgba(191,0,255,0.5); }
+.add-btn:hover { background:rgba(191,0,255,0.1);box-shadow:0 0 12px rgba(191,0,255,0.2); }
+
+button.main { width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;color:#000;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s;animation:neonBg 5s linear infinite;margin-top:4px; }
+button.main::after { content:'';position:absolute;inset:0;background:rgba(255,255,255,0.12); }
+button.main:hover { transform:translateY(-1px); }
+button.main:active { transform:scale(.99); }
+button.main:disabled { opacity:.4;cursor:not-allowed;transform:none; }
+
+.result-box { display:none;margin-top:14px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.25);border-radius:12px;padding:16px;box-shadow:0 0 20px rgba(0,255,136,0.1); }
+.result-box.visible { display:block;animation:fadeUp .3s ease; }
+.result-label { font-size:11px;color:var(--success);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:9px;font-weight:600;text-shadow:0 0 8px rgba(0,255,170,0.6); }
+.url-row { display:flex;align-items:center;gap:10px; }
+.short-url { flex:1;font-size:15px;font-weight:600;color:#00eeff;word-break:break-all;text-decoration:none;text-shadow:0 0 8px rgba(0,238,255,0.5); }
+.short-url:hover { text-decoration:underline; }
+button.copy { background:rgba(0,238,255,0.1);border:1px solid rgba(0,238,255,0.3);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;color:#00eeff;cursor:pointer;flex-shrink:0;transition:all .2s; }
+button.copy:hover { background:rgba(0,238,255,0.2);box-shadow:0 0 10px rgba(0,238,255,0.3); }
+
+.msg { display:none;margin-top:10px;font-size:13px;text-align:center;padding:10px 14px;border-radius:10px; }
+.msg.visible { display:block; }
+.msg.error { color:var(--error);background:rgba(255,68,102,0.07);border:1px solid rgba(255,68,102,0.2);text-shadow:0 0 8px rgba(255,68,102,0.4); }
+
+.links-div { height:1px;background:linear-gradient(90deg,transparent,rgba(191,0,255,0.3),transparent);margin:20px 0 16px; }
+.links-hdr { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
+.links-hdr h3 { font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:600; }
+.lcount { background:rgba(191,0,255,0.1);border:1px solid rgba(191,0,255,0.3);border-radius:100px;padding:2px 10px;font-size:11px;color:#bf00ff;font-weight:600;text-shadow:0 0 6px rgba(191,0,255,0.5); }
+.link-item { display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:rgba(255,255,255,0.02);border:1px solid rgba(191,0,255,0.12);border-radius:10px;margin-bottom:7px;transition:all .2s; }
+.link-item:hover { border-color:rgba(191,0,255,0.35);box-shadow:0 0 10px rgba(191,0,255,0.1); }
+.link-info { min-width:0;flex:1; }
+.link-code { font-size:14px;font-weight:600;margin-bottom:2px;animation:neonText 5s linear infinite; }
+.link-meta { font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px; }
+.ltype { display:inline-block;font-size:10px;padding:1px 7px;border-radius:100px;margin-left:6px;font-weight:600;vertical-align:middle; }
+.lt-r { background:rgba(0,255,136,0.08);color:#00ff88;border:1px solid rgba(0,255,136,0.25); }
+.lt-t { background:rgba(191,0,255,0.08);color:#bf00ff;border:1px solid rgba(191,0,255,0.25); }
+button.del { background:none;border:1px solid rgba(255,68,102,0.2);border-radius:6px;color:rgba(255,68,102,0.6);font-size:11px;font-family:inherit;padding:4px 10px;cursor:pointer;flex-shrink:0;margin-left:10px;transition:all .2s; }
+button.del:hover { background:rgba(255,68,102,0.1);color:#ff4466; }
+
+/* SCREENS */
+.screen { text-align:center;position:relative;z-index:1;width:100%;max-width:420px;animation:fadeUp .4s ease; }
+
+/* REDIRECT TIMER SCREEN */
+.timer-ring { position:relative;width:120px;height:120px;margin:0 auto 20px; }
+.timer-ring svg { transform:rotate(-90deg); }
+.timer-bg { fill:none;stroke:rgba(191,0,255,0.15);stroke-width:6; }
+.timer-prog { fill:none;stroke-width:6;stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:0;transition:stroke 0.5s;animation:neonBg 5s linear infinite;stroke:url(#timerGrad); }
+.timer-num { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:36px;font-weight:700;color:#fff;animation:neonText 5s linear infinite; }
+#normalRedirect h2 { font-size:22px;color:#fff;margin-bottom:6px;font-weight:700; }
+#normalRedirect p { color:var(--muted);font-size:13px; }
+
+/* TASK SCREEN */
+.task-card { background:rgba(4,4,14,0.93);border:1px solid #bf00ff;border-radius:20px;padding:26px;animation:neonBorder 5s linear infinite;position:relative;overflow:hidden; }
+.task-card::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#bf00ff,#00eeff,transparent);background-size:300% auto;animation:shimmer 2s linear infinite; }
+.task-icon { font-size:52px;margin-bottom:14px; }
+.task-title-txt { font-size:22px;font-weight:700;color:#fff;margin-bottom:8px; }
+.task-desc-txt { font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.6; }
+.task-btns { display:flex;flex-direction:column;gap:10px;margin-bottom:18px; }
+.task-btn {
+  width:100%;padding:13px;border:none;border-radius:11px;font-size:15px;font-weight:700;
+  font-family:inherit;color:#000;cursor:pointer;transition:transform .15s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.task-btn::after { content:'';position:absolute;inset:0;background:rgba(255,255,255,0.12); }
+.task-btn:hover { transform:scale(1.02); }
+.task-btn.done-btn { opacity:.5;cursor:default;transform:none; }
+
+.cdown-wrap { display:none;margin-bottom:16px; }
+.cdown-wrap.show { display:block;animation:fadeUp .3s ease; }
+.cdown-bar-bg { background:rgba(255,255,255,0.06);border-radius:100px;height:5px;overflow:hidden;margin-bottom:8px;box-shadow:0 0 8px rgba(191,0,255,0.2); }
+.cdown-bar { height:100%;border-radius:100px;animation:neonBg 5s linear infinite; }
+.cdown-txt { font-size:13px;color:var(--muted);text-align:center; }
+.cdown-txt span { animation:neonText 5s linear infinite;font-weight:700; }
+
+.unlock-btn { display:none;width:100%;padding:15px;border:none;border-radius:12px;font-size:17px;font-weight:700;font-family:inherit;color:#000;cursor:pointer;background:linear-gradient(135deg,#00cc77,#00ff88);box-shadow:0 0 20px rgba(0,255,136,0.6);transition:transform .15s;position:relative;overflow:hidden; }
+.unlock-btn::after { content:'';position:absolute;inset:0;background:rgba(255,255,255,0.15); }
+.unlock-btn.show { display:block;animation:fadeUp .4s ease; }
+.unlock-btn:hover { transform:scale(1.02);box-shadow:0 0 30px rgba(0,255,136,0.8); }
+
+.footer { margin-top:28px;font-size:11px;color:rgba(112,112,160,0.4);text-align:center;letter-spacing:2px;text-transform:uppercase;position:relative;z-index:1; }
+.footer span { animation:neonText 5s linear infinite; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="glow-orb orb1"></div>
+<div class="glow-orb orb2"></div>
+<div class="glow-orb orb3"></div>
+<div class="laser lh lh1"></div>
+<div class="laser lh lh2"></div>
+<div class="laser lv lv1"></div>
+<div class="laser lv lv2"></div>
+
+<!-- REDIRECT TIMER -->
+<div id="normalRedirect" class="screen" style="display:none">
+  <div class="badge" style="margin-bottom:16px"><span class="bdot"></span>K2G MAFIA</div>
+  <div class="timer-ring">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#bf00ff"/>
+          <stop offset="50%" stop-color="#00eeff"/>
+          <stop offset="100%" stop-color="#ff00aa"/>
+        </linearGradient>
+      </defs>
+      <circle class="timer-bg" cx="60" cy="60" r="45"/>
+      <circle class="timer-prog" id="timerProg" cx="60" cy="60" r="45"/>
+    </svg>
+    <div class="timer-num" id="timerNum">5</div>
+  </div>
+  <h2>Link mil gayi!</h2>
+  <p>5 seconds mein redirect hoga...</p>
+</div>
+
+<!-- TASK SCREEN -->
+<div id="taskScreen" class="screen" style="display:none">
+  <div class="badge" style="margin-bottom:16px"><span class="bdot"></span>K2G MAFIA</div>
+  <div class="task-card">
+    <div class="task-icon">🔒</div>
+    <div class="task-title-txt" id="tTitle">Task complete karo</div>
+    <div class="task-desc-txt" id="tDesc"></div>
+    <div class="task-btns" id="tBtns"></div>
+    <div class="cdown-wrap" id="cdownWrap">
+      <div class="cdown-bar-bg"><div class="cdown-bar" id="cdownBar"></div></div>
+      <div class="cdown-txt">Unlock mein: <span id="cdownNum">15</span> sec</div>
+    </div>
+    <button class="unlock-btn" id="unlockBtn" onclick="doUnlock()">🔓 Unlock Karo</button>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div class="wrap" id="adminScreen">
+  <div class="badge"><span class="bdot"></span>K2G MAFIA</div>
+  <h1>Short <span>Links</span></h1>
+  <p class="sub">Redirect ya Task Unlock — link auto generate hoga</p>
+  <div class="card">
+    <label style="margin-bottom:8px">Link ka type chunno</label>
+    <div class="type-toggle">
+      <button class="type-btn active" id="btnNormal" onclick="setType('r')">⚡ Redirect</button>
+      <button class="type-btn" id="btnTask" onclick="setType('t')">🔒 Task Unlock</button>
+    </div>
+
+    <div class="field-group">
+      <label id="urlLabel">Original URL (jahan redirect hoga)</label>
+      <input type="text" id="longUrl" placeholder="https://t.me/k2gmafia ya koi bhi link" />
+    </div>
+
+    <div class="task-fields" id="taskFields">
+      <div class="field-group">
+        <label>Task Title</label>
+        <input type="text" id="tTitleIn" placeholder="Hamare Telegram channel ko join karo" />
+      </div>
+      <div class="field-group">
+        <label>Task Description (optional)</label>
+        <textarea id="tDescIn" placeholder="Neeche buttons tap karo phir unlock milega"></textarea>
+      </div>
+      <label style="margin-bottom:8px;display:block">Buttons</label>
+      <div id="btnBuilder"></div>
+      <button type="button" class="add-btn" onclick="addBtn()">+ Button Add Karo</button>
+      <div class="field-group">
+        <label>Unlock seconds (5–60)</label>
+        <input type="number" id="tWaitIn" value="15" min="5" max="60" />
+      </div>
+    </div>
+
+    <button class="main" id="createBtn" onclick="createLink()">✦ Link Banao</button>
+    <div class="result-box" id="resultBox">
+      <div class="result-label">✓ Link taiyaar!</div>
+      <div class="url-row">
+        <a class="short-url" id="resultUrl" href="#" target="_blank"></a>
+        <button class="copy" onclick="copyUrl(event)">Copy</button>
+      </div>
+    </div>
+    <div class="msg error" id="errMsg"></div>
+
+    <div id="linksList" style="display:none">
+      <div class="links-div"></div>
+      <div class="links-hdr">
+        <h3>Bane hue links</h3>
+        <span class="lcount" id="lcount">0</span>
+      </div>
+      <div id="linksContainer"></div>
+      <div style="text-align:right;margin-top:6px">
+        <button onclick="adminLogout()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit">Logout</button>
+      </div>
+    </div>
+  </div>
+  <div class="footer">Built by <span>K2G MAFIA</span></div>
+</div>
+
+<script>
+const DB = 'https://k2g-link-default-rtdb.firebaseio.com';
+const ADMIN_PASS = 'k2gmafia';
+let isAdmin = false;
+let curType = 'r';
+let taskPayload = null;
+let clickedBtns = new Set();
+let totalBtns = 0;
+let countdownStarted = false;
+
+// ===== PARTICLES =====
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+const COLORS = ['#bf00ff','#00eeff','#ff00aa','#00ff88','#ffcc00'];
+let pts = [];
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+for(let i=0;i<70;i++) pts.push({x:Math.random()*1000,y:Math.random()*1000,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.6+.1,c:COLORS[Math.floor(Math.random()*COLORS.length)]});
+function draw(){ ctx.clearRect(0,0,W,H); pts.forEach(p=>{ p.x+=p.vx;p.y+=p.vy; if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=p.a;ctx.fill(); }); ctx.globalAlpha=1; requestAnimationFrame(draw); }
+draw();
+
+// ===== BOT CHECK =====
+const BOTS=['telegrambot','twitterbot','facebookexternalhit','whatsapp','discordbot','slackbot','googlebot','bingbot'];
+function isBot(){ const ua=navigator.userAgent.toLowerCase(); return BOTS.some(b=>ua.includes(b)); }
+
+// ===== ADMIN =====
+function checkAdmin(){ if(sessionStorage.getItem('k2g_adm')===ADMIN_PASS){ isAdmin=true; } }
+function adminLogout(){ sessionStorage.removeItem('k2g_adm'); isAdmin=false; loadLinks(); }
+function tryAdmin(){ const p=prompt('Admin password:'); if(p===ADMIN_PASS){sessionStorage.setItem('k2g_adm',ADMIN_PASS);isAdmin=true;loadLinks();}else if(p!==null)alert('Galat!'); }
+
+// ===== TYPE =====
+function setType(t){
+  curType=t;
+  document.getElementById('btnNormal').classList.toggle('active',t==='r');
+  document.getElementById('btnTask').classList.toggle('active',t==='t');
+  document.getElementById('taskFields').classList.toggle('show',t==='t');
+  document.getElementById('urlLabel').textContent = t==='r' ? 'Original URL (jahan redirect hoga)' : 'Final URL (unlock hone ke baad)';
+}
+
+// ===== AUTO CODE =====
+function genCode(){ return Math.random().toString(36).substring(2,8); }
+
+// ===== BUTTON BUILDER =====
+let bc=0;
+function addBtn(){
+  bc++;
+  const id='b'+bc;
+  const d=document.createElement('div');
+  d.className='btn-item'; d.id='bi'+id;
+  d.innerHTML=`<div class="btn-row"><input type="text" placeholder="Button text — jaise 📢 Join Telegram" id="bt${id}" /><button class="rm-btn" onclick="removeBtn('bi${id}')">✕</button></div><div class="btn-row"><input type="text" placeholder="https://t.me/k2gmafia" id="bu${id}" /><input type="color" id="bc${id}" value="#bf00ff" class="color-pick" /></div>`;
+  document.getElementById('btnBuilder').appendChild(d);
+}
+function removeBtn(id){ const e=document.getElementById(id); if(e)e.remove(); }
+function getBtns(){
+  const items=document.getElementById('btnBuilder').querySelectorAll('.btn-item');
+  const out=[];
+  items.forEach(item=>{
+    const id=item.id.replace('bi','');
+    const t=document.getElementById('bt'+id);
+    const u=document.getElementById('bu'+id);
+    const c=document.getElementById('bc'+id);
+    if(t&&u) out.push({text:t.value.trim(),url:u.value.trim(),color:c?c.value:'#bf00ff'});
+  });
+  return out;
+}
+
+// ===== CREATE =====
+async function createLink(){
+  const url=document.getElementById('longUrl').value.trim();
+  const btn=document.getElementById('createBtn');
+  const errMsg=document.getElementById('errMsg');
+  const resultBox=document.getElementById('resultBox');
+  resultBox.classList.remove('visible'); errMsg.classList.remove('visible');
+  if(!url) return showErr('⚠️ URL daalo');
+
+  let payload={ url, created:Date.now() };
+  let path;
+
+  if(curType==='r'){
+    path='/r';
+    payload.type='r';
+  } else {
+    path='/t';
+    payload.type='t';
+    const title=document.getElementById('tTitleIn').value.trim();
+    const desc=document.getElementById('tDescIn').value.trim();
+    const wait=parseInt(document.getElementById('tWaitIn').value)||15;
+    const btns=getBtns();
+    if(!title) return showErr('⚠️ Task title daalo');
+    if(!btns.length) return showErr('⚠️ Kam se kam ek button add karo');
+    for(const b of btns) if(!b.text||!b.url) return showErr('⚠️ Har button ka text aur URL bharo');
+    payload={...payload,taskTitle:title,taskDesc:desc,buttons:btns,waitSeconds:wait};
+  }
+
+  btn.disabled=true; btn.textContent='Ban raha hai...';
+
+  // Auto generate unique code
+  let code, exists=true;
+  while(exists){
+    code=genCode();
+    const chk=await fetch(`${DB}${path}/${code}.json`);
+    const d=await chk.json();
+    exists=!!(d&&d.url);
+  }
+
+  try{
+    const res=await fetch(`${DB}${path}/${code}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error();
+    const shortUrl=`${location.origin}/${curType==='r'?'r':'t'}/${code}`;
+    document.getElementById('resultUrl').href=shortUrl;
+    document.getElementById('resultUrl').textContent=shortUrl;
+    resultBox.classList.add('visible');
+    document.getElementById('longUrl').value='';
+    if(curType==='t'){ document.getElementById('tTitleIn').value=''; document.getElementById('tDescIn').value=''; document.getElementById('btnBuilder').innerHTML=''; bc=0; }
+    loadLinks();
+  }catch(e){ showErr('❌ Error. Dobara try karo.'); }
+  btn.disabled=false; btn.textContent='✦ Link Banao';
+}
+function showErr(m){ const e=document.getElementById('errMsg'); e.textContent=m; e.classList.add('visible'); }
+
+// ===== LOAD LINKS =====
+async function loadLinks(){
+  const container=document.getElementById('linksContainer');
+  const list=document.getElementById('linksList');
+  container.innerHTML='';
+  let all=[];
+  try{
+    const [rRes,tRes]=await Promise.all([fetch(`${DB}/r.json`),fetch(`${DB}/t.json`)]);
+    const rData=await rRes.json(); const tData=await tRes.json();
+    if(rData) Object.entries(rData).filter(([k,v])=>v&&v.url).forEach(([k,v])=>all.push({code:k,data:v,type:'r'}));
+    if(tData) Object.entries(tData).filter(([k,v])=>v&&v.url).forEach(([k,v])=>all.push({code:k,data:v,type:'t'}));
+  }catch(e){}
+  if(!all.length){ list.style.display='none'; return; }
+  document.getElementById('lcount').textContent=all.length;
+  all.sort((a,b)=>(b.data.created||0)-(a.data.created||0));
+  all.forEach(({code,data,type})=>{
+    const div=document.createElement('div'); div.className='link-item';
+    div.innerHTML=`<div class="link-info"><div class="link-code">/${type}/${code}<span class="ltype ${type==='r'?'lt-r':'lt-t'}">${type==='r'?'Redirect':'Task'}</span></div><div class="link-meta">${type==='t'?(data.taskTitle||'Task Link'):data.url}</div></div>${isAdmin?`<button class="del" onclick="delLink('${type}','${code}')">Del</button>`:''}`;
+    container.appendChild(div);
+  });
+  if(!isAdmin){
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;margin-top:8px';
+    d.innerHTML=`<button onclick="tryAdmin()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit">🔐 Admin Login</button>`;
+    container.appendChild(d);
+  }
+  list.style.display='block';
+}
+async function delLink(type,code){ if(!confirm(`/${type}/${code} delete karein?`))return; await fetch(`${DB}/${type}/${code}.json`,{method:'DELETE'}); loadLinks(); }
+function copyUrl(e){ const u=document.getElementById('resultUrl').textContent; navigator.clipboard.writeText(u).then(()=>{ e.target.textContent='Copied!'; setTimeout(()=>e.target.textContent='Copy',1500); }); }
+
+// ===== REDIRECT WITH 5 SEC TIMER =====
+function startTimer(dest, sec){
+  document.getElementById('normalRedirect').style.display='block';
+  document.getElementById('adminScreen').style.display='none';
+  const prog=document.getElementById('timerProg');
+  const num=document.getElementById('timerNum');
+  const total=283;
+  let left=sec;
+  num.textContent=left;
+  prog.style.strokeDashoffset=0;
+  const interval=setInterval(()=>{
+    left--;
+    num.textContent=left;
+    prog.style.strokeDashoffset=total*(1-(left/sec));
+    if(left<=0){ clearInterval(interval); window.location.replace(dest); }
+  },1000);
+  // start animation
+  prog.style.transition=`stroke-dashoffset ${sec}s linear`;
+  setTimeout(()=>prog.style.strokeDashoffset=total,50);
+}
+
+// ===== TASK SCREEN =====
+function showTask(data){
+  document.getElementById('adminScreen').style.display='none';
+  document.getElementById('taskScreen').style.display='block';
+  document.getElementById('tTitle').textContent=data.taskTitle||'Task complete karo';
+  document.getElementById('tDesc').textContent=data.taskDesc||'';
+  taskPayload=data;
+  const wrap=document.getElementById('tBtns');
+  wrap.innerHTML='';
+  const btns=data.buttons||[];
+  totalBtns=btns.length;
+  clickedBtns=new Set();
+  btns.forEach((b,i)=>{
+    const btn=document.createElement('button');
+    btn.className='task-btn';
+    btn.textContent=b.text;
+    btn.style.background=b.color||'#bf00ff';
+    btn.style.boxShadow=`0 0 16px ${b.color||'#bf00ff'}88`;
+    btn.style.animation='none';
+    btn.id='tbtn'+i;
+    btn.onclick=()=>onTaskBtn(b.url,i,btn);
+    wrap.appendChild(btn);
+  });
+}
+function onTaskBtn(url,idx,btn){
+  window.open(url,'_blank');
+  btn.classList.add('done-btn');
+  btn.textContent='✓ '+btn.textContent;
+  clickedBtns.add(idx);
+  if(clickedBtns.size>=totalBtns && !countdownStarted){
+    countdownStarted=true;
+    const wait=taskPayload&&taskPayload.waitSeconds?taskPayload.waitSeconds:15;
+    startCountdown(wait);
+  }
+}
+function startCountdown(sec){
+  const wrap=document.getElementById('cdownWrap');
+  const bar=document.getElementById('cdownBar');
+  const num=document.getElementById('cdownNum');
+  wrap.classList.add('show');
+  num.textContent=sec;
+  bar.style.width='100%';
+  bar.style.transition=`width ${sec}s linear`;
+  setTimeout(()=>bar.style.width='0%',50);
+  let left=sec;
+  const iv=setInterval(()=>{ left--; num.textContent=left; if(left<=0){ clearInterval(iv); document.getElementById('cdownWrap').style.display='none'; document.getElementById('unlockBtn').classList.add('show'); } },1000);
+}
+function doUnlock(){ if(taskPayload&&taskPayload.url) window.location.replace(taskPayload.url); }
+
+// ===== CHECK REDIRECT =====
+async function checkRedirect(){
+  const path=window.location.pathname;
+  const rm=path.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
+  const tm=path.match(/^\/t\/([a-zA-Z0-9_-]+)$/);
+  if(!rm&&!tm) return false;
+
+  if(isBot()){
+    document.getElementById('normalRedirect').style.display='block';
+    document.getElementById('adminScreen').style.display='none';
+    document.getElementById('timerNum').textContent='K2G';
+    document.getElementById('normalRedirect').querySelector('h2').textContent='K2G MAFIA Link';
+    document.getElementById('normalRedirect').querySelector('p').textContent='Yeh link K2G MAFIA se banaya gaya hai.';
+    return true;
+  }
+
+  if(rm){
+    try{
+      const res=await fetch(`${DB}/r/${rm[1]}.json`);
+      const d=await res.json();
+      if(d&&d.url){ startTimer(d.url,5); return true; }
+    }catch(e){}
+    showNotFound(); return true;
+  }
+
+  if(tm){
+    try{
+      const res=await fetch(`${DB}/t/${tm[1]}.json`);
+      const d=await res.json();
+      if(d&&d.url){ showTask(d); return true; }
+    }catch(e){}
+    showNotFound(); return true;
+  }
+  return false;
+}
+function showNotFound(){
+  document.getElementById('normalRedirect').style.display='block';
+  document.getElementById('adminScreen').style.display='none';
+  document.getElementById('timerNum').textContent='?';
+  document.getElementById('normalRedirect').querySelector('h2').textContent='Link nahi mili 😕';
+  document.getElementById('normalRedirect').querySelector('p').textContent='Yeh short link exist nahi karta.';
+}
+
+// ===== INIT =====
+window.addEventListener('load',async()=>{
+  const rd=await checkRedirect();
+  if(!rd){ checkAdmin(); loadLinks(); }
+});
+</script>
+</body>
+</html>
